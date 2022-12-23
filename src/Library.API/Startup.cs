@@ -11,6 +11,8 @@ using Microsoft.Extensions.Configuration;
 using Library.API.Services;
 using Library.API.Entities;
 using Microsoft.EntityFrameworkCore;
+using Library.API.Dtos;
+using Library.API.Helpers;
 
 namespace Library.API
 {
@@ -59,8 +61,18 @@ namespace Library.API
             {
                 app.UseExceptionHandler();
             }
-
+            AutoMapper.Mapper.Initialize(config =>
+            {
+                config.CreateMap<Author, AuthorDto>()
+                .ForMember(destination => destination.Name,
+                option => option.MapFrom(src =>
+                $"{src.FirstName} {src.FirstName}"))
+                .ForMember(destination => destination.Age,
+                option => option.MapFrom(src => src.DateOfBirth.GetCurrentAge()));
+                });
+            
             libraryContext.EnsureSeedDataForContext();
+
 
             app.UseMvc(); 
         }

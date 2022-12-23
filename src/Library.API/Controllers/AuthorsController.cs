@@ -1,3 +1,4 @@
+using AutoMapper;
 using Library.API.Dtos;
 using Library.API.Helpers;
 using Library.API.Services;
@@ -18,18 +19,10 @@ namespace Library.API.Controllers
         public IActionResult GetAuthors()
         {   
            var authorsFromRepo =  _libraryRepository.GetAuthors();
-            var authorsDtos = new List<AuthorDto>();
-            foreach (var author in authorsFromRepo)
-            {
-                authorsDtos.Add(new AuthorDto
-                {
-                    Id = author.Id,
-                    Name = $"{author.FirstName} {author.LastName}",
-                    Age = author.DateOfBirth.GetCurrentAge(),
-                    Genre =author.Genre
-                }) ;
-            }
-            return new JsonResult(authorsDtos);
+
+            var authors = Mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo);
+
+            return new JsonResult(authors);
         }
 
     }
