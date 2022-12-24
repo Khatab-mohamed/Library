@@ -59,7 +59,14 @@ namespace Library.API
             }
             else
             {
-                app.UseExceptionHandler();
+                app.UseExceptionHandler(appBuilder =>
+                {
+                    appBuilder.Run(async context =>
+                    {
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync("An unexepected fault happnened, Try again later.");
+                    });
+                });
             }
             AutoMapper.Mapper.Initialize(config =>
             {
