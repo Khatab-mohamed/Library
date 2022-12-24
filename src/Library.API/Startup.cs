@@ -76,7 +76,9 @@ namespace Library.API
                 $"{src.FirstName} {src.FirstName}"))
                 .ForMember(destination => destination.Age,
                 option => option.MapFrom(src => src.DateOfBirth.GetCurrentAge()));
-                });
+                
+                 config.CreateMap<Book, BookDto>(); 
+            });
             
             libraryContext.EnsureSeedDataForContext();
 
