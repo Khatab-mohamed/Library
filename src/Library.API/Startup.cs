@@ -84,6 +84,7 @@ namespace Library.API
                 option => option.MapFrom(src => src.DateOfBirth.GetCurrentAge()));
                 
                  config.CreateMap<Book, BookDto>(); 
+                 config.CreateMap<AuthorCreationDto,Author>(); 
             });
             
             libraryContext.EnsureSeedDataForContext();
