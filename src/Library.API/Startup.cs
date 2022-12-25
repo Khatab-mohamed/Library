@@ -79,12 +79,13 @@ namespace Library.API
                 config.CreateMap<Author, AuthorDto>()
                 .ForMember(destination => destination.Name,
                 option => option.MapFrom(src =>
-                $"{src.FirstName} {src.FirstName}"))
+                $"{src.FirstName} {src.LastName}"))
                 .ForMember(destination => destination.Age,
                 option => option.MapFrom(src => src.DateOfBirth.GetCurrentAge()));
                 
                  config.CreateMap<Book, BookDto>(); 
-                 config.CreateMap<AuthorCreationDto,Author>(); 
+                 config.CreateMap<AuthorCreationDto,Author>();
+                config.CreateMap<BookCreationDto, Book>();
             });
             
             libraryContext.EnsureSeedDataForContext();
