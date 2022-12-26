@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +9,6 @@ using Library.API.Entities;
 using Microsoft.EntityFrameworkCore;
 using Library.API.Dtos;
 using Library.API.Helpers;
-using System.Xml;
 using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace Library.API
@@ -41,6 +36,7 @@ namespace Library.API
             {
                 setupAction.ReturnHttpNotAcceptable = true;
                 setupAction.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+                setupAction.InputFormatters.Add(new XmlDataContractSerializerInputFormatter());
             });
 
             // register the DbContext on the container, getting the connection string from

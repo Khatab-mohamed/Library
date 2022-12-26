@@ -3,6 +3,7 @@ using Library.API.Dtos;
 using Library.API.Entities;
 using Library.API.Helpers;
 using Library.API.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -54,6 +55,16 @@ namespace Library.API.Controllers
             var authorToReturn = Mapper.Map<AuthorDto>(authorEntity);
 
             return CreatedAtRoute("GetAuthor",new{ authorEntity.Id},authorToReturn);
+        }
+
+        [HttpPost("{id}")]
+        public IActionResult BlockAuthorCreation(Guid id) 
+        {
+            if (_libraryRepository.AuthorExists(id))
+            {
+                return new StatusCodeResult(StatusCodes.Status409Conflict);
+            }
+            return BadRequest();
         }
     }
 }
