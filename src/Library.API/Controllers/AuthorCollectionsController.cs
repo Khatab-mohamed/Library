@@ -47,7 +47,7 @@ namespace Library.API.Controllers
             return CreatedAtRoute("GetAuthorCollection",new { ids= idsAsString},authorCollectionToReturn);
         }
 
-        [HttpGet("{ids}",Name ="GetAuthorCollection")]
+       [HttpGet("{ids}",Name ="GetAuthorCollection")]
         public IActionResult GetAuthorsCollection([ModelBinder(BinderType = typeof(ArrayModelBinder))] IEnumerable<Guid> ids)
         {
             if(ids==null)
@@ -59,6 +59,21 @@ namespace Library.API.Controllers
             var authorsToReturn = Mapper.Map<IEnumerable<AuthorDto>>(authorsEntities);
             return Ok(authorsToReturn);
         }
+        
+        [HttpDelete("{ids}")]
+        public IActionResult DeleteAuthorsCollection([ModelBinder(BinderType = typeof(ArrayModelBinder))] IEnumerable<Guid> ids)
+        {
+            if (ids == null)
+                return BadRequest();
+            foreach (var authorid in ids)
+            {
+                var auhtorFromRepo = _libraryRepository.GetAuthor(authorid);
+                _libraryRepository.DeleteAuthor(auhtorFromRepo);
+            }
 
+            if (!_libraryRepository.Save())
+                throw new Exception($"Deleting authors failed on save.");
+            return NoContent();
+        }
     }
 }
