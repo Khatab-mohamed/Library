@@ -72,17 +72,18 @@ namespace Library.API
             }
             AutoMapper.Mapper.Initialize(config =>
             {
-                config.CreateMap<Author, AuthorDto>()
-                .ForMember(destination => destination.Name,
-                option => option.MapFrom(src =>
-                $"{src.FirstName} {src.LastName}"))
-                .ForMember(destination => destination.Age,
-                option => option.MapFrom(src => src.DateOfBirth.GetCurrentAge()));
-                
-                 config.CreateMap<Book, BookDto>(); 
-                 config.CreateMap<AuthorCreationDto,Author>();
-                config.CreateMap<BookCreationDto, Book>();
-                config.CreateMap<BookUpdateDto, Book>();
+            config.CreateMap<Author, AuthorDto>()
+            .ForMember(destination => destination.Name,
+            option => option.MapFrom(src =>
+            $"{src.FirstName} {src.LastName}"))
+            .ForMember(destination => destination.Age,
+            option => option.MapFrom(src => src.DateOfBirth.GetCurrentAge()));
+
+            config.CreateMap<Book, BookDto>();
+            config.CreateMap<AuthorCreationDto, Author>();
+            config.CreateMap<BookCreationDto, Book>();
+            config.CreateMap<BookUpdateDto, Book>();
+            config.CreateMap<Book, BookUpdateDto>();
             });
             
             libraryContext.EnsureSeedDataForContext();

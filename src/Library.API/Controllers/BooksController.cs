@@ -2,6 +2,7 @@ using AutoMapper;
 using Library.API.Dtos;
 using Library.API.Entities;
 using Library.API.Services;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace Library.API.Controllers
             _libraryRepository = repository;
         }
 
+
         [HttpGet]
         public IActionResult GetBooks(Guid authorId)
         {
@@ -26,6 +28,7 @@ namespace Library.API.Controllers
             var booksForAuthor = Mapper.Map<IEnumerable<BookDto>>(booksForAuthorFromRepo);
             return Ok(booksForAuthor);
         }
+
 
         [HttpGet("{bookId}", Name = "GetBookForAuthor")]
         public IActionResult GetBookForAuthor(Guid authorId, Guid bookId)
@@ -74,6 +77,7 @@ namespace Library.API.Controllers
             return NoContent();
         }
 
+        
         [HttpPut("{id}")]
         public IActionResult UpdateBook(Guid authorId, Guid id,[FromBody] BookUpdateDto book)
         {
@@ -106,6 +110,44 @@ namespace Library.API.Controllers
             
             if (!_libraryRepository.Save()) throw new Exception($"Can not Update Book {id} ");
             
+            return NoContent();
+        }
+        
+        
+        [HttpPatch("{bookId}")]
+        public IActionResult PartiallyUpdateBookForAuthor(Guid authorId,Guid bookId, [FromBody] JsonPatchDocument<BookUpdateDto> patchDocument ) 
+        {
+            if(patchDocument ==null) return BadRequest();
+            if (!_libraryRepository.AuthorExists(authorId)) return NotFound();
+
+            var bookFromRepo = _libraryRepository.GetBookForAuthor(authorId,bookId);
+            if (bookFromRepo == null)
+            {
+                var bookDto = new BookUpdateDto();
+                patchDocument.ApplyTo(bookDto);
+
+                var bookToAdd = Mapper.Map<Book>(bookDto);
+                bookToAdd.AuthorId = authorId;
+
+                _libraryRepository.AddBookForAuthor(authorId, bookToAdd);
+                if (!_libraryRepository.Save()) throw new Exception($"Upserting Book {bookToAdd.AuthorId} for author {authorId} failed on save.");
+
+                var bookToReturn = Mapper.Map<BookDto>(bookToAdd);
+                return CreatedAtRoute("GetBookForAuthor",
+                    new {authorId = authorId, bookId = bookToReturn.Id}, bookToReturn);
+            }
+
+            //Apply Patch Document
+
+            var bookToPatch = Mapper.Map<BookUpdateDto>(bookFromRepo);
+
+            patchDocument.ApplyTo(bookToPatch);
+
+            //validation
+
+            Mapper.Map(bookToPatch, bookFromRepo);
+            _libraryRepository.UpdateBookForAuthor(bookFromRepo);
+            if (!_libraryRepository.Save()) throw new Exception($"Patching Book {bookId} for author {authorId} failed on save.");
             return NoContent();
         }
     }
