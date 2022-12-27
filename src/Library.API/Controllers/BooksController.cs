@@ -89,9 +89,16 @@ namespace Library.API.Controllers
         {
             if(book == null)return BadRequest();
 
+            if (book.Description == book.Title)
+                ModelState.AddModelError(nameof(BookUpdateDto), "The provider Description should be different from book Title");
+            if (!ModelState.IsValid)
+                return new UnprocessableEntityObjectResult(ModelState);
+
+
             if (!_libraryRepository.AuthorExists(authorId))
                 return NotFound();
             var bookForAuthorFromRepo = _libraryRepository.GetBookForAuthor(authorId, id);
+
 
             if (bookForAuthorFromRepo == null)
             {
