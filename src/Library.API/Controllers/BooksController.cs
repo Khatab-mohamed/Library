@@ -130,17 +130,35 @@ namespace Library.API.Controllers
         [HttpPatch("{bookId}")]
         public IActionResult PartiallyUpdateBookForAuthor(Guid authorId,Guid bookId, [FromBody] JsonPatchDocument<BookUpdateDto> patchDocument ) 
         {
-            if(patchDocument ==null) return BadRequest();
-            if (!_libraryRepository.AuthorExists(authorId)) return NotFound();
+            if(patchDocument ==null) 
+                return BadRequest();
+            if (!_libraryRepository.AuthorExists(authorId)) 
+                return NotFound();
 
             var bookFromRepo = _libraryRepository.GetBookForAuthor(authorId,bookId);
+            
+            //Creating new Book => case it's null
+                //  Upserting
             if (bookFromRepo == null)
             {
                 var bookDto = new BookUpdateDto();
-                patchDocument.ApplyTo(bookDto);
+                patchDocument.ApplyTo(bookDto,ModelState);
 
+                //  Apply Valdition On  the DTO
+                if (bookDto.Title == bookDto.Description)
+                    ModelState.AddModelError(nameof(BookUpdateDto), "The provided description should be different from the title.");
+                TryValidateModel(bookDto);
+
+
+                //  Case the DTO is invalied
+
+                if (!ModelState.IsValid)
+                    return new UnprocessableEntityObjectResult(ModelState);
+                
+                // Case DTO isValied
                 var bookToAdd = Mapper.Map<Book>(bookDto);
                 bookToAdd.AuthorId = authorId;
+
 
                 _libraryRepository.AddBookForAuthor(authorId, bookToAdd);
                 if (!_libraryRepository.Save()) throw new Exception($"Upserting Book {bookToAdd.AuthorId} for author {authorId} failed on save.");
@@ -149,10 +167,28 @@ namespace Library.API.Controllers
                 return CreatedAtRoute("GetBookForAuthor",
                     new {authorId = authorId, bookId = bookToReturn.Id}, bookToReturn);
             }
-
+                        
             //Apply Patch Document
 
             var bookToPatch = Mapper.Map<BookUpdateDto>(bookFromRepo);
+
+            // Any Errors in patch Document will make the ModelState Invalied
+            
+            patchDocument.ApplyTo(bookToPatch, ModelState);
+
+            if (bookToPatch.Title == bookToPatch.Description)
+            {
+                ModelState.AddModelError(nameof(BookUpdateDto), "The provided description should be different from the title.");
+            }
+
+            //Try Validate BookUpdateDto Before Patching it
+
+            TryValidateModel(bookToPatch);
+
+            //check if JsonPatchDocument is valied
+            if (!ModelState.IsValid)
+                return new UnprocessableEntityObjectResult(ModelState);
+
 
             patchDocument.ApplyTo(bookToPatch);
 
