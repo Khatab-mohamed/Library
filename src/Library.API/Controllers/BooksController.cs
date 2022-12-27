@@ -1,6 +1,7 @@
 using AutoMapper;
 using Library.API.Dtos;
 using Library.API.Entities;
+using Library.API.Helpers;
 using Library.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -47,7 +48,12 @@ namespace Library.API.Controllers
         {
             if (bookCreationDto == null)
                 return BadRequest();
-
+            if (bookCreationDto.Title == bookCreationDto.Description)
+                ModelState.AddModelError(nameof(BookCreationDto),"The provided Discription Should be different form the Title");
+            if(!ModelState.IsValid)
+            {
+                return new UnprocessableEntityObjectResult(ModelState);
+            }
             if (!_libraryRepository.AuthorExists(authorId))
                 return NotFound();
 
