@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Library.API.Dtos;
 using Library.API.Helpers;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace Library.API
 {
@@ -53,7 +54,11 @@ namespace Library.API
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, 
             ILoggerFactory loggerFactory, LibraryContext libraryContext)
         {
+            //  Adding a console logger to the loggin system
             loggerFactory.AddConsole();
+
+            
+            loggerFactory.AddDebug(LogLevel.Information);
 
             if (env.IsDevelopment())
             {
@@ -65,6 +70,15 @@ namespace Library.API
                 {
                     appBuilder.Run(async context =>
                     {
+                        var exceptionHandlerFeature= context.Features.Get<IExceptionHandlerFeature>();
+
+                        if(exceptionHandlerFeature != null)
+                        {
+                            var logger = loggerFactory.CreateLogger("Global Exception logger");
+                            logger.LogError(500,
+                                exceptionHandlerFeature.Error,
+                                exceptionHandlerFeature.Error.Message);
+                        }
                         context.Response.StatusCode = 500;
                         await context.Response.WriteAsync("An unexepected fault happnened, Try again later.");
                     });
