@@ -14,6 +14,7 @@
             {
                _pageSize = (value > maxAuthorPageSize ) ? maxAuthorPageSize: value;
             }
-        } 
+        }
+        public string Genre { get; set; }
     }
 }

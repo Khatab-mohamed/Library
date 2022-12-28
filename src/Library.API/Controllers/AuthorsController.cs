@@ -54,6 +54,8 @@ namespace Library.API.Controllers
             return Ok(authors);
 
         }
+
+
         //Helper Method
         private string CreateAuthorRsourceUri(
             AuthorsResouceParameters authorsResouceParameters,
@@ -64,19 +66,22 @@ namespace Library.API.Controllers
                 case ResourceUriType.NextPage:
                     return _urlHelper.Link("GetAuthors", new
                     {
+                        genre = authorsResouceParameters.Genre,
                         pageNumber = authorsResouceParameters.PageNumber + 1,
                         pageSize = authorsResouceParameters.PageSize
-                    });
+                    }); ;
                     break;
                 case ResourceUriType.PreviousPage:
                     return _urlHelper.Link("GetAuthors", new
                     {
+                        genre = authorsResouceParameters.Genre,
                         pageNumber = authorsResouceParameters.PageNumber - 1,
                         pageSize = authorsResouceParameters.PageSize
                     }) ;
                     break;
                 default: return _urlHelper.Link("GetAuthors", new
                 {
+                    genre = authorsResouceParameters.Genre,
                     pageNumber = authorsResouceParameters.PageNumber,
                     pageSize = authorsResouceParameters.PageSize
                 
