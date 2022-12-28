@@ -14,20 +14,75 @@ namespace Library.API.Controllers
     public class AuthorsController : Controller
     {
         private readonly ILibraryRepository _libraryRepository;
-        public AuthorsController(ILibraryRepository libraryRepository)
+        private readonly IUrlHelper _urlHelper;
+        public AuthorsController(ILibraryRepository libraryRepository, IUrlHelper urlHelper)
         {
             _libraryRepository = libraryRepository;
+            _urlHelper = urlHelper;
         }
         
-        [HttpGet]
+        [HttpGet(Name ="GetAuthors")]
         public IActionResult GetAuthors(AuthorsResouceParameters authorsResouceParameters)
         {
-             
+            //  PagedList<Author>
             var authorsFromRepo =  _libraryRepository.GetAuthors(authorsResouceParameters);
+
+            var previousPageLink = authorsFromRepo.HasPrevious ?
+                CreateAuthorRsourceUri(authorsResouceParameters,
+                ResourceUriType.PreviousPage) : null;
+
+             var nextPageLink = authorsFromRepo.HasNext ?
+                CreateAuthorRsourceUri(authorsResouceParameters,
+                ResourceUriType.NextPage) : null;
+
+            var paginationMetadata = new
+            {
+                totalCount = authorsFromRepo.TotalCount,
+                pageSize = authorsFromRepo.PageSize,
+                currentPage = authorsFromRepo.CurrentPage,
+                totalPages = authorsFromRepo.TotalPages,
+                previousPageLink = previousPageLink,
+                nextPageLink= nextPageLink
+            };
+
+            Response.Headers.Add("X-Pagination",
+                Newtonsoft.Json.JsonConvert.SerializeObject(paginationMetadata));
+
 
             var authors = Mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo);
 
             return Ok(authors);
+
+        }
+        //Helper Method
+        private string CreateAuthorRsourceUri(
+            AuthorsResouceParameters authorsResouceParameters,
+            ResourceUriType type)
+        {
+            switch(type)
+            {
+                case ResourceUriType.NextPage:
+                    return _urlHelper.Link("GetAuthors", new
+                    {
+                        pageNumber = authorsResouceParameters.PageNumber + 1,
+                        pageSize = authorsResouceParameters.PageSize
+                    });
+                    break;
+                case ResourceUriType.PreviousPage:
+                    return _urlHelper.Link("GetAuthors", new
+                    {
+                        pageNumber = authorsResouceParameters.PageNumber - 1,
+                        pageSize = authorsResouceParameters.PageSize
+                    }) ;
+                    break;
+                default: return _urlHelper.Link("GetAuthors", new
+                {
+                    pageNumber = authorsResouceParameters.PageNumber,
+                    pageSize = authorsResouceParameters.PageSize
+                
+                });
+                    
+            }
         }
         
         [HttpGet("{id}",Name ="GetAuthor")]
