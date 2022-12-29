@@ -66,6 +66,7 @@ namespace Library.API.Controllers
                 case ResourceUriType.NextPage:
                     return _urlHelper.Link("GetAuthors", new
                     {
+                        searchQuery = authorsResouceParameters.SearchQuery,
                         genre = authorsResouceParameters.Genre,
                         pageNumber = authorsResouceParameters.PageNumber + 1,
                         pageSize = authorsResouceParameters.PageSize
@@ -74,6 +75,7 @@ namespace Library.API.Controllers
                 case ResourceUriType.PreviousPage:
                     return _urlHelper.Link("GetAuthors", new
                     {
+                        searchQuery = authorsResouceParameters.SearchQuery,
                         genre = authorsResouceParameters.Genre,
                         pageNumber = authorsResouceParameters.PageNumber - 1,
                         pageSize = authorsResouceParameters.PageSize
@@ -81,6 +83,7 @@ namespace Library.API.Controllers
                     break;
                 default: return _urlHelper.Link("GetAuthors", new
                 {
+                    searchQuery = authorsResouceParameters.SearchQuery,
                     genre = authorsResouceParameters.Genre,
                     pageNumber = authorsResouceParameters.PageNumber,
                     pageSize = authorsResouceParameters.PageSize
