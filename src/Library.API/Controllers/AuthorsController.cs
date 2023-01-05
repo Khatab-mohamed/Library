@@ -5,6 +5,7 @@ using Library.API.Helpers;
 using Library.API.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Remotion.Linq.Clauses;
 using System;
 using System.Collections.Generic;
 
@@ -15,15 +16,22 @@ namespace Library.API.Controllers
     {
         private readonly ILibraryRepository _libraryRepository;
         private readonly IUrlHelper _urlHelper;
-        public AuthorsController(ILibraryRepository libraryRepository, IUrlHelper urlHelper)
+        private readonly IPropertyMappingService _propertyMappingService;
+
+        public AuthorsController(ILibraryRepository libraryRepository, IUrlHelper urlHelper, IPropertyMappingService propertyMappingService)
         {
             _libraryRepository = libraryRepository;
             _urlHelper = urlHelper;
+            _propertyMappingService = propertyMappingService;
         }
         
         [HttpGet(Name ="GetAuthors")]
         public IActionResult GetAuthors(AuthorsResouceParameters authorsResouceParameters)
         {
+
+            if (!_propertyMappingService.ValidMappingExistsFor<AuthorDto,Author>(authorsResouceParameters.OrderBy))
+                return BadRequest();
+
             //  PagedList<Author>
             var authorsFromRepo =  _libraryRepository.GetAuthors(authorsResouceParameters);
 
@@ -66,6 +74,7 @@ namespace Library.API.Controllers
                 case ResourceUriType.NextPage:
                     return _urlHelper.Link("GetAuthors", new
                     {
+                        OrderBy = authorsResouceParameters.OrderBy,
                         searchQuery = authorsResouceParameters.SearchQuery,
                         genre = authorsResouceParameters.Genre,
                         pageNumber = authorsResouceParameters.PageNumber + 1,
@@ -75,6 +84,7 @@ namespace Library.API.Controllers
                 case ResourceUriType.PreviousPage:
                     return _urlHelper.Link("GetAuthors", new
                     {
+                        OrderBy = authorsResouceParameters.OrderBy,
                         searchQuery = authorsResouceParameters.SearchQuery,
                         genre = authorsResouceParameters.Genre,
                         pageNumber = authorsResouceParameters.PageNumber - 1,
@@ -83,6 +93,7 @@ namespace Library.API.Controllers
                     break;
                 default: return _urlHelper.Link("GetAuthors", new
                 {
+                    OrderBy = authorsResouceParameters.OrderBy,
                     searchQuery = authorsResouceParameters.SearchQuery,
                     genre = authorsResouceParameters.Genre,
                     pageNumber = authorsResouceParameters.PageNumber,
