@@ -118,17 +118,20 @@ namespace Library.API.Controllers
         }
         
         [HttpGet("{id}",Name ="GetAuthor")]
-        public IActionResult GetAuthors(Guid id)
+        public IActionResult GetAuthors(Guid id, [FromQuery]string fields)
         {
+            if (!_typeHelperService.TypeHasProperities<AuthorDto>(fields))
+                return BadRequest();
+
             if (!_libraryRepository.AuthorExists(id))
                 return NotFound();
             var authorFromRepo = _libraryRepository.GetAuthor(id);
 
             if (authorFromRepo == null)
                 return NotFound();
-           var authors = Mapper.Map<AuthorDto>(authorFromRepo);
+           var author = Mapper.Map<AuthorDto>(authorFromRepo);
 
-            return new JsonResult(authors);
+            return Ok(author.ShapeData(fields));
         }
 
         [HttpPost]
