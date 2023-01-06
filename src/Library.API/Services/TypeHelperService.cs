@@ -6,7 +6,7 @@ namespace Library.API.Services
     {
         public bool TypeHasProperities<T>(string fields)
         {
-             if(string.IsNullOrWhiteSpace( fields)) return false;
+             if(string.IsNullOrWhiteSpace(fields)) return true;
 
             var fieldsAfterSplit = fields.Split(',');
             

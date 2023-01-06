@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Library.API.Controllers
 {
@@ -16,35 +17,47 @@ namespace Library.API.Controllers
     {
         private readonly ILibraryRepository _libraryRepository;
         private readonly ILogger _logger;
+        private readonly IUrlHelper _urlHelper;
 
-        public BooksController(ILibraryRepository repository,ILogger<BooksController> logger)
+        public BooksController(ILibraryRepository repository,
+            ILogger<BooksController> logger,
+            IUrlHelper urlHelper)
         {
             _libraryRepository = repository;
             _logger= logger;
+            _urlHelper = urlHelper;
         }
 
 
-        [HttpGet]
+        [HttpGet(Name = "GetBooksForAuthor")]
         public IActionResult GetBooks(Guid authorId)
         {
             if (!_libraryRepository.AuthorExists(authorId))
                 return NotFound();
             var booksForAuthorFromRepo = _libraryRepository.GetBooksForAuthor(authorId);
             var booksForAuthor = Mapper.Map<IEnumerable<BookDto>>(booksForAuthorFromRepo);
-            return Ok(booksForAuthor);
+            booksForAuthor = booksForAuthor.Select(book =>
+                {
+                    book = CreateLinksForBook(book);
+                    return book;
+                });
+            var wrapper = new LinkedCollectionResourceWrapperDto<BookDto>(booksForAuthor);
+            
+            return Ok(CreateLinksForBooks(wrapper));
         }
 
 
-        [HttpGet("{bookId}", Name = "GetBookForAuthor")]
-        public IActionResult GetBookForAuthor(Guid authorId, Guid bookId)
+        [HttpGet("{id}", Name = "GetBookForAuthor")]
+        public IActionResult GetBookForAuthor(Guid authorId, Guid id)
         {
             if (!_libraryRepository.AuthorExists(authorId))
                 return NotFound();
 
-            var bookForAuthorFromRepo = _libraryRepository.GetBookForAuthor(authorId, bookId);
+            var bookForAuthorFromRepo = _libraryRepository.GetBookForAuthor(authorId, id);
             if (bookForAuthorFromRepo == null)
                 return NotFound();
-            return Ok(Mapper.Map<BookDto>(bookForAuthorFromRepo));
+            var bookForAuthor = Mapper.Map<BookDto>(bookForAuthorFromRepo);
+            return Ok(CreateLinksForBook(bookForAuthor));
         }
 
         [HttpPost]
@@ -68,11 +81,13 @@ namespace Library.API.Controllers
                 throw new Exception("Creating a book failed on save.");
             var bookToReturn = Mapper.Map<BookDto>(bookEntity);
 
-            return CreatedAtRoute("GetBookForAuthor", new { authorId = bookToReturn.AuthorId, bookId = bookToReturn.Id }, bookToReturn);
+            return CreatedAtRoute("GetBookForAuthor",
+                new { authorId = bookToReturn.AuthorId, id = bookToReturn.Id },
+                CreateLinksForBook( bookToReturn));
         }
 
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}", Name ="DeleteBookForAuthor")]
         public IActionResult DeleteBookForAuthor(Guid authorId, Guid id)
         {
             if (!_libraryRepository.AuthorExists(authorId))
@@ -89,7 +104,7 @@ namespace Library.API.Controllers
         }
 
         
-        [HttpPut("{id}")]
+        [HttpPut("{id}",Name ="UpdateBookForAuthor")]
         public IActionResult UpdateBook(Guid authorId, Guid id,[FromBody] BookUpdateDto book)
         {
             if(book == null)return BadRequest();
@@ -132,7 +147,7 @@ namespace Library.API.Controllers
         }
         
         
-        [HttpPatch("{bookId}")]
+        [HttpPatch("{id}", Name ="PartiallyUpdateBookForAuthor")]
         public IActionResult PartiallyUpdateBookForAuthor(Guid authorId,Guid bookId, [FromBody] JsonPatchDocument<BookUpdateDto> patchDocument ) 
         {
             if(patchDocument ==null) 
@@ -203,6 +218,45 @@ namespace Library.API.Controllers
             _libraryRepository.UpdateBookForAuthor(bookFromRepo);
             if (!_libraryRepository.Save()) throw new Exception($"Patching Book {bookId} for author {authorId} failed on save.");
             return NoContent();
+        }
+
+        private BookDto CreateLinksForBook(BookDto book)
+        {
+            book.Links.Add(
+                new LinkDto(_urlHelper.Link("GetBookForAuthor",
+                new { id = book.Id }),
+                "self",
+                "GET"));
+
+             book.Links.Add(
+                new LinkDto(_urlHelper.Link("DeleteBookForAuthor",
+                new { id = book.Id }),
+                "delete_book",
+                "DELETE"));
+
+             book.Links.Add(
+                new LinkDto(_urlHelper.Link("UpdateBookForAuthor",
+                new { id = book.Id }),
+                "update_book",
+                "PUT"));
+             book.Links.Add(
+                new LinkDto(_urlHelper.Link("PartiallyUpdateBookForAuthor",
+                new { id = book.Id }),
+                "partially_update_book",
+                "PATCH"));
+
+
+            return book;
+        }
+
+        private  LinkedCollectionResourceWrapperDto<BookDto> CreateLinksForBooks(
+            LinkedCollectionResourceWrapperDto<BookDto> bookWrapper)
+        {
+           bookWrapper.Links.Add(
+                new LinkDto(_urlHelper.Link("GetBooksForAuthor", new { }),
+                "self",
+                "GET"));
+            return bookWrapper;
         }
     }
 }
